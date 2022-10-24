@@ -2,6 +2,10 @@ use  actix_web::{get, web, App, HttpServer};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex; 
 
+mod weatherlist;
+use weatherlist::services;
+
+
 struct AppState {
     weatherlist_entries: Mutex<Vec<WeatherListEntry>>   
 }
@@ -10,7 +14,8 @@ struct AppState {
 struct WeatherListEntry {
     id: i32,
     date: i64,
-    title: String
+    title: String,
+    weather_state: String
 }
 
 #[get("/")]
@@ -28,6 +33,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(app_data.clone())
             .service(index)
+            .configure(services::config)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
