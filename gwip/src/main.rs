@@ -12,7 +12,6 @@ impl App for Gwip {
             ScrollArea::auto_sized().show(ui, | ui | {
                 for dumy in &self.weather_info {
                     ui.label(&dumy.title);
-                    ui.label(&dumy.url);
                     ui.label(&dumy.description);
                 }
             })
@@ -24,32 +23,18 @@ impl App for Gwip {
     }
 }
 
-
-// fn main() -> Result<()> {
-//     // let app: Gwip = Gwip::new();
-//     // let window_options: NativeOptions = NativeOptions::default();
-
-//     // run_native(Box::new(app), window_options);
-
-//     let result = reqwest::blocking::get("127.0.0.0:8080")?;
-
-//     println!("{:?}", result);
-    
-//     Ok(())
-// }
-
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {
-    let app: Gwip = Gwip::new();
+    let res = reqwest::get("http://localhost:8080/weatherlist/entries").await?;
+    println!("{:?}", &res);
+    let body = res.text().await?;   
+
+    println!("{body}");
+
+    let app: Gwip = Gwip::new(&body);
     let window_options: NativeOptions = NativeOptions::default();
 
     run_native(Box::new(app), window_options);
 
-    let res = reqwest::get("").await?;
-    println!("Status: {}", res.status());
-    println!("Headers:\n{:#?}", res.headers());
-
-    let body = res.text().await?;
-    println!("Body:\n{}", body);
     Ok(())
 }

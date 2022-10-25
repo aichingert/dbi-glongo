@@ -1,6 +1,4 @@
-use eframe::{epi::App, run_native, egui::{CentralPanel, ScrollArea}, NativeOptions};
-use std::fmt;
-use reqwest::*;
+use serde_json::Value;
 
 pub struct Gwip {
     pub weather_info: Vec<WeatherInfoCard>
@@ -9,21 +7,17 @@ pub struct Gwip {
 pub struct WeatherInfoCard {
     pub title: String,
     pub description: String,
-    pub url: String,
+    pub date: i64
 }
 
 impl Gwip {
-    pub fn new() -> Self {
-        let iter = (0..20).map( | dumy | WeatherInfoCard {
-            title: format!("title{}", dumy),
-            description: format!("desc{}", dumy),
-            url: format!("https://examle.com/{}", dumy)
-        });
+    pub fn new(content: &String) -> Self {
+        let json: Value = serde_json::from_str(&content)
+            .unwrap_or(Value::String("".to_string()));
 
-
-
+        
         Gwip {
-            weather_info: Vec::from_iter(iter)
-        } 
+            weather_info: vec![]
+        }
     }
 }
