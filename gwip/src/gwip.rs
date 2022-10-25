@@ -1,6 +1,6 @@
-use std::fmt::format;
-
 use eframe::{epi::App, run_native, egui::{CentralPanel, ScrollArea}, NativeOptions};
+use std::fmt;
+use reqwest::*;
 
 pub struct Gwip {
     pub weather_info: Vec<WeatherInfoCard>
@@ -19,6 +19,8 @@ impl Gwip {
             description: format!("desc{}", dumy),
             url: format!("https://examle.com/{}", dumy)
         });
+
+
 
         Gwip {
             weather_info: Vec::from_iter(iter)
