@@ -4,10 +4,10 @@ use tokio;
 
 mod gwip;
 
-use gwip::{Gwip, WeatherInfoCard};
+use gwip::Gwip;
 
 impl App for Gwip {
-    fn update(&mut self, ctx: &eframe::egui::CtxRef, frame: &mut eframe::epi::Frame<'_>) {
+    fn update(&mut self, ctx: &eframe::egui::CtxRef, _frame: &mut eframe::epi::Frame<'_>) {
         CentralPanel::default().show(ctx, | ui | {
             ScrollArea::auto_sized().show(ui, | ui | {
                 for dumy in &self.weather_info {
