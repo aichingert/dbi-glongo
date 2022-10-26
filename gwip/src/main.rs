@@ -8,8 +8,6 @@ use gwip::Gwip;
 
 impl App for Gwip {
     fn update(&mut self, ctx: &eframe::egui::CtxRef, _frame: &mut eframe::epi::Frame<'_>) {
-
-
         CentralPanel::default().show(ctx, | ui | {
             ScrollArea::auto_sized().show(ui, | ui | {
                 for card in &self.weather_info {
@@ -23,6 +21,10 @@ impl App for Gwip {
 
     fn name(&self) -> &str {
         "Get Weather Information"
+    }
+
+    fn clear_color(&self) -> eframe::egui::Rgba {
+        eframe::egui::Rgba::from_rgb(0.0, 0.0, 255.0).into()
     }
 }
 
