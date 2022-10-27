@@ -13,7 +13,8 @@ impl App for Gwip {
                 for card in &self.weather_info {
                     ui.add(Label::new(&card.title).heading());
                     ui.label(&card.description);
-                    ui.label(&card.date.to_string());
+                    ui.label(format!("Date: {}", &card.date));
+                    ui.add_space(5.0);
                }
             })
         });

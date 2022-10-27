@@ -3,7 +3,7 @@ use serde::Deserialize;
 #[derive(Deserialize, Clone)]
 pub struct CreateEntryData {
     pub title: String,
-    pub date: i64,
+    pub date: String,
     pub weather_state: String
 }
 

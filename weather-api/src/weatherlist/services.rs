@@ -21,7 +21,7 @@ async fn create_entry(data: web::Data<AppState>, extractor: web::Json<CreateEntr
     weatherlist_entries.push(WeatherListEntry {
         id: max_id + 1,
         title: extractor.title.clone(),
-        date: extractor.date,
+        date: extractor.date.clone(),
         weather_state: extractor.weather_state.clone()
     });
 

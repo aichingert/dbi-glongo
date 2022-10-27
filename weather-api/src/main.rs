@@ -13,9 +13,9 @@ struct AppState {
 #[derive(Serialize, Deserialize, Clone)]
 struct WeatherListEntry {
     id: i32,
-    date: i64,
     title: String,
-    weather_state: String
+    weather_state: String,
+    date: String
 }
 
 #[get("/")]

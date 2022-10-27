@@ -7,7 +7,7 @@ pub struct Gwip {
 pub struct WeatherInfoCard {
     pub title: String,
     pub description: String,
-    pub date: i64
+    pub date: String
 }
 
 impl Gwip {
@@ -32,7 +32,7 @@ impl Gwip {
                 weather_cards.push(WeatherInfoCard {
                     title: card["title"].as_str().unwrap().to_string(),
                     description: card["weather_state"].as_str().unwrap().to_string(),
-                    date: card["date"].as_i64().unwrap(), 
+                    date: card["date"].as_str().unwrap().to_string(), 
                 });
             }
         }
