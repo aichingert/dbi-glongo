@@ -1,1 +1,10 @@
 = Space
+
+this should be a physics simulation that shows the space curvature caused from planets
+( this is also a 2d simplification because you cannot show it in the 3 dimensional space )
+
+== TODOS
+
+* Implement grid mesh so you can see space
+* Implement the ability to "throw" planets into the net
+* Show the curvature caused of the planets
