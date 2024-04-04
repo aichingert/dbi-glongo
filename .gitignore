@@ -1,3 +1,5 @@
-
-main
-*.o
+*.beam
+*.ez
+/build
+erl_crash.dump
+dockervolume/
