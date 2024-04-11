@@ -1,0 +1,3 @@
+= glongo
+
+Mongodb example project with a gtk frontend using the mongo-c-driver
