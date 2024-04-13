@@ -1,3 +1,28 @@
 = glongo
+:icons: font
+:sectnums:
+:toc: left
 
 Mongodb example project with a gtk frontend using the mongo-c-driver
+
+== Information
+
+The way to get the value of text from bson_iter is very weird. If someone knows how to do it better feel free to open a pull request and let me know. Currently I am doing it this way.
+
+[source, c]
+----
+value = bson_iter_value(&iter);
+
+if (value->value_type == 2) {
+	printf("%s\n", (char*)value->value.v_utf8.str);
+}
+----
+
+== How to run
+
+[source, sh]
+----
+make
+----
+
+If make fails then you have to install the gtk and mongo-c-driver libraries for c.
