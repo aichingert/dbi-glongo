@@ -53,10 +53,14 @@ static void append_entries_on_clicked(GtkButton *button, gpointer data) {
 
 									bson_iter_array(&child, &len, &data);
 									if (bson_init_static(&b, data, len)) {
-										char *json;
-
-										if ((json = bson_as_canonical_extended_json(&b, NULL))) {
-											g_print("%s -> %u\n", json, len);
+										bson_iter_t n;
+										if (bson_iter_init(&n, &b)) {
+											g_print(":)\n");
+											while (bson_iter_next(&n)) {
+												g_print("%s\n", bson_iter_utf8(&n, NULL));
+											}
+										} else {
+											g_print(":(\n");
 										}
 									}
 								}
