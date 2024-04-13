@@ -25,9 +25,6 @@ futures-util = "0.3.30"
 bson = { version = "2.10.0", features = ["chrono-0_4"] }
 chrono = "0.4.37"
 
-# mongodb = "2.8.2"
-# futures-util = "0.3.30"
-
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
 ssr = [
@@ -45,7 +42,7 @@ denylist = ["actix-files", "actix-web", "leptos_actix"]
 skip_feature_sets = [["ssr", "hydrate"]]
 
 [package.metadata.leptos]
-output-name = "ssr_modes"
+output-name = "blog"
 site-root = "target/site"
 site-pkg-dir = "pkg"
 style-file = "style/main.scss"

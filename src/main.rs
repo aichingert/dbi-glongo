@@ -17,7 +17,6 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .leptos_routes(leptos_options.to_owned(), routes.to_owned(), App)
             .service(Files::new("/", site_root))
-        //.wrap(middleware::Compress::default())
     })
     .bind(&addr)?
     .run()

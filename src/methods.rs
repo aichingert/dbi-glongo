@@ -5,7 +5,7 @@ use thiserror::Error;
 #[derive(Error, Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PostError {
     #[error("Invalid post ID.")]
-    InvalidId,
+    InvalidArticle,
     #[error("Post not found.")]
     PostNotFound,
     #[error("Server error.")]
@@ -33,10 +33,10 @@ struct Entry {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Content {
-    text: String,
-    links: Vec<String>,
-    coordinates: Vec<Coordinate>,
-    images: Vec<String>,
+    pub text: String,
+    pub links: Vec<String>,
+    pub coordinates: Vec<Coordinate>,
+    pub images: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -168,4 +168,38 @@ pub async fn get_all_entries() -> Result<Vec<EntryDto>, ServerFnError> {
         .flatten()
         .map(|entry| EntryDto::from_entry_with_authors(entry, &authors))
         .collect::<Vec<EntryDto>>())
+}
+
+#[server]
+pub async fn get_entry(article: String) -> Result<Option<EntryDto>, ServerFnError> {
+    use futures_util::StreamExt;
+    use mongodb::bson::doc;
+
+    let client =
+        mongodb::Client::with_uri_str("mongodb://root:root@localhost/db?authSource=admin").await?;
+    let database = client.database("blogDB");
+
+    let cursor = database
+        .collection::<AuthorDto>("users")
+        .find(None, None)
+        .await?;
+    let authors = cursor
+        .collect::<Vec<Result<AuthorDto, _>>>()
+        .await
+        .into_iter()
+        .flatten()
+        .collect::<Vec<AuthorDto>>();
+
+    let filter = article.split('-').collect::<Vec<_>>().join(" ");
+
+    let mut cursor = database
+        .collection::<Entry>("entries")
+        .find(doc! { "title": filter }, None)
+        .await?;
+
+    if let Some(entry) = cursor.next().await {
+        Ok(Some(EntryDto::from_entry_with_authors(entry?, &authors)))
+    } else {
+        Ok(None)
+    }
 }
