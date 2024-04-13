@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <mongoc/mongoc.h>
 
 typedef struct {
@@ -21,10 +22,14 @@ static void append_entries_on_clicked(GtkButton *button, gpointer data) {
     collection = mongoc_client_get_collection(client, "blogDB", "entries");
 
     query = bson_new();
-    cursor = mongoc_collection_find_with_opts(collection, query, NULL, NULL);
+    cursor = mongoc_collection_find_with_opts(collection, query, BCON_NEW("limit", BCON_INT64 (1)), NULL);
+
+	bson_iter_t iter;
+	bson_iter_t child;	
+	
+	char *json;
 
     while (mongoc_cursor_next(cursor, &doc)) {
-		bson_iter_t iter;
 		GtkWidget *tv = gtk_text_view_new();
 		GtkTextBuffer *tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 		GString *text = g_string_new("");
@@ -32,15 +37,45 @@ static void append_entries_on_clicked(GtkButton *button, gpointer data) {
 		if (bson_iter_init(&iter, doc)) {
 			while (bson_iter_next(&iter)) {
 				if (g_strcmp0(bson_iter_key(&iter), "_id")) {
-					g_print("Found element key: \"%s\"\n", bson_iter_key(&iter));
 					value = bson_iter_value(&iter);
-					g_print("got it %u\n", value->value_type);
-					if (value->value_type == 2) {
-						text = g_string_append(text, value->value.v_utf8.str);
+
+					switch (value->value_type) {
+						case 2:
+							text = g_string_append(text, bson_iter_utf8(&iter, NULL));
+							break;
+						case 3:
+							bson_iter_recurse(&iter, &child);
+							while (bson_iter_next(&child)) {
+								if (!g_strcmp0(bson_iter_key(&child), "images")) {
+									bson_t b;
+									uint32_t len;
+									const uint8_t *data;
+
+									bson_iter_array(&child, &len, &data);
+									if (bson_init_static(&b, data, len)) {
+										char *json;
+
+										if ((json = bson_as_canonical_extended_json(&b, NULL))) {
+											g_print("%s -> %u\n", json, len);
+										}
+									}
+								}
+								value = bson_iter_value(&child);
+								g_print("%s -> %u\n", bson_iter_key(&child), value->value_type);
+							}
+							break;
+						default:
+							break;
 					}
+
+					g_print("Found element key: \"%s\"\n", bson_iter_key(&iter));
+					g_print("Value type: \"%u\"\n", value->value_type);
+
+					
 				}
 			}
 		}
+
 		gtk_text_buffer_set_text(tb, text->str, -1);
 		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tv), GTK_WRAP_WORD_CHAR);
 		gtk_box_append((GtkBox*) comments->container, tv);
