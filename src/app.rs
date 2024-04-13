@@ -1,8 +1,8 @@
+use crate::methods::{EntryDto, AuthorDto, CommentDto, get_all_entries};
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -17,11 +17,16 @@ pub fn App() -> impl IntoView {
             <main>
                 <Routes>
                     <Route path="" view=HomePage/>
-                    <Route path="write-blog" view=HomePage/>
+                    <Route path="write-blog" view=WriteBlog/>
                 </Routes>
             </main>
         </Router>
     }
+}
+
+#[component]
+fn WriteBlog() -> impl IntoView {
+    view! {}
 }
 
 #[component]
@@ -30,51 +35,69 @@ fn HomePage() -> impl IntoView {
 
     let entry_view = move || {
         entry.and_then(|entries| {
-            entries.iter()
+            entries
+                .iter()
                 .map(|entry| {
-                    let image_view = entry.content.images
-                        .iter()
-                        .map(|image| view! {
-                            <img src={ format!("data:image/png;base64, {}", image) } />
+                    let category_view = entry.categories.iter()
+                        .filter(|&s| matches!(
+                            s.as_str(), "NASA" | "vulnerability" | "Programming" | "news" | "bypass"
+                        ))
+                        .map(|category| view! {
+                            <a class="{category}" href="/category/{category}"> {category}</a>
                         })
                         .collect_view();
-                    let link_view = entry.content.links
-                        .iter()
-                        .map(|link| view! { <a href={link}>{link}</a><br/>})
-                        .collect_view();
 
-                    view! { 
-                        <ul> { image_view } </ul>
-                        <h1>{&entry.title}</h1>
-                        <p style="font-style: italic">{&entry.description}</p>
+                    let last_edited = entry.creation_date
+                        .to_chrono()
+                        .to_rfc2822()
+                        .chars()
+                        .take(16)
+                        .collect::<String>();
 
-                        <pre style="text-wrap: wrap"> {&entry.content.text} </pre>
-
-                        <ul> { link_view } </ul>
-
-                        <CommentView comments_allowed=entry.comments_allowed comments=entry.comments.clone() />
-
-                        <div style="border-bottom: solid white 1px; margin: 25px" />
-
+                    view! {
+                        <p style="font-style: italic; font-size: 15px; color: #3f3f46"> { last_edited } </p>
+                        <div>
+                            <p> { &entry.title } </p>
+                            { category_view }
+                        </div>
+                        <p style="color: #3f3f46"> { &entry.description } </p>
                     }
                 })
                 .collect_view()
-            })
+        })
     };
 
     view! {
-        <h1>"Blogs"</h1>
         <Suspense fallback=move || view! { <p>"Loading posts..."</p> }>
-            <ul>{entry_view}</ul>
+            <div style="display: grid;">
+                <div style="width: 100%; grid-column-start: 1; grid-column-end: 2; align-items: center">
+                    <div style="display: flex; flex-direction: column; align-items: center">
+                        <div>
+                            <h1>Blogs</h1>
+                        </div>
+
+                        <div style="margin: 10px">
+                            <a style="margin: 10px" href="/">Read</a>
+                            <a style="margin: 10px" href="/">Write</a>
+                        </div>
+                    </div>
+                </div>
+                <div style="grid-column-start: 2; grid-column-end: 3">
+                    <p>Recent posts</p>
+                    <div style="border-bottom: 1px solid #3f3f46" />
+                    <ul>{entry_view}</ul>
+                </div>
+            </div>
+
         </Suspense>
     }
 }
 
 #[component]
-fn CommentView(comments_allowed: bool, comments: Vec<Comment>) -> impl IntoView {
+fn CommentView(comments_allowed: bool, comments: Vec<CommentDto>) -> impl IntoView {
     view! {
         {move || match comments_allowed {
-            true => view! { 
+            true => view! {
                 <form action="" method="post" style="margin: 25px">
                     <div>
                         <textarea style="font-size:1.2em;"></textarea>
@@ -89,73 +112,11 @@ fn CommentView(comments_allowed: bool, comments: Vec<Comment>) -> impl IntoView 
 
         <For each=move || comments.clone()
             key=|comment| comment.creation_date.clone()
-            children=move |comment: Comment| {
+            children=move |comment: CommentDto| {
               view! {
                   <p>{ comment.text }</p>
               }
             }
         />
     }
-}
-
-#[derive(Error, Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum PostError {
-    #[error("Invalid post ID.")]
-    InvalidId,
-    #[error("Post not found.")]
-    PostNotFound,
-    #[error("Server error.")]
-    ServerError,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Entry {
-    title: String,
-    author: bson::oid::ObjectId,
-    description: String,
-
-    creation_date: bson::DateTime,
-    edit_dates: Vec<bson::DateTime>,
-    impression_count: u64,
-
-    content: Content,
-
-    comments_allowed: bool,
-    categories: Vec<String>,
-    comments: Vec<Comment>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Content {
-    text: String,
-    links: Vec<String>,
-    coordinates: Vec<Coordinate>,
-    images: Vec<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Coordinate {
-    long: f64,
-    lat: f64,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Comment {
-    text: String,
-    creation_date: bson::DateTime,
-    author: bson::oid::ObjectId,
-}
-
-#[server]
-pub async fn get_all_entries() -> Result<Vec<Entry>, ServerFnError> {
-    use futures_util::StreamExt;
-
-    let client = mongodb::Client::with_uri_str("mongodb://root:root@localhost/db?authSource=admin").await?;
-    let cursor = client.database("blogDB").collection::<Entry>("entries").find(None, None).await?;
-
-    Ok(cursor.collect::<Vec<Result<Entry, _>>>().await.into_iter().flatten().collect::<Vec<Entry>>())
 }

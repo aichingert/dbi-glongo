@@ -437,6 +437,7 @@ dependencies = [
  "ahash",
  "base64 0.13.1",
  "bitvec",
+ "chrono",
  "hex",
  "indexmap",
  "js-sys",
@@ -532,7 +533,9 @@ checksum = "8a0d04d43504c61aa6c7531f1871dd0d418d91130162063b789da00fd7057a5e"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
+ "js-sys",
  "num-traits",
+ "wasm-bindgen",
  "windows-targets 0.52.5",
 ]
 
@@ -1034,6 +1037,7 @@ dependencies = [
  "actix-files",
  "actix-web",
  "bson",
+ "chrono",
  "console_error_panic_hook",
  "console_log",
  "futures-util",
