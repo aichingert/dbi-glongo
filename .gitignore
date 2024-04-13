@@ -3,3 +3,9 @@
 /build
 erl_crash.dump
 data
+
+
+
+# Added by cargo
+
+/target
