@@ -1,0 +1,3 @@
+= dbi-glongo
+
+This is just a simple frontend demonstrating how to use mongodb driver
