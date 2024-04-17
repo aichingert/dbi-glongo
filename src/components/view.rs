@@ -1,6 +1,8 @@
 use leptos::*;
 use leptos_router::*;
-use crate::methods::{CommentDto, get_entry, PostError};
+
+use crate::database::dtos::CommentDto;
+use crate::server::{get_entry, PostError};
 
 #[derive(Params, Clone, Debug, PartialEq, Eq)]
 pub struct PostParams {
@@ -40,11 +42,17 @@ pub fn Post() -> impl IntoView {
                 .collect_view();
 
             let article = entry.title.split(' ').collect::<Vec<_>>().join("-");
+            let date = entry.creation_date
+                .to_chrono()
+                .to_rfc2822()
+                .chars()
+                .take(16)
+                .collect::<String>();
 
             view! {
                 <ul> { image_view } </ul>
 
-                <p class="small-text">{ &entry.get_date_string() }</p>
+                <p class="small-text">{ &date }</p>
 
                 <h1>{&entry.title}</h1>
                 <h2 style="font-style: italic;">{&entry.description}</h2>

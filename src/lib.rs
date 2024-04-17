@@ -1,7 +1,9 @@
 #![feature(result_flattening)]
 
 pub mod app;
-pub mod methods;
+
+pub mod server;
+pub mod database;
 pub mod components;
 
 use cfg_if::cfg_if;

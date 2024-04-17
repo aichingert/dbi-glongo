@@ -1,7 +1,7 @@
 use leptos::*;
 use leptos_router::ActionForm;
 
-use crate::methods::AddPost;
+use crate::server::AddPost;
 use crate::components::utils::FileUpload;
 
 #[component]

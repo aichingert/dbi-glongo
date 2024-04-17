@@ -1,5 +1,6 @@
 use leptos::*;
-use crate::methods::get_all_entries;
+
+use crate::server::get_all_entries;
 
 #[component]
 pub fn HomePage() -> impl IntoView {
@@ -20,7 +21,13 @@ pub fn HomePage() -> impl IntoView {
                         })
                             .collect_view();
 
-                        let last_edited = entry.get_date_string();
+                        let last_edited = entry.creation_date
+                            .to_chrono()
+                            .to_rfc2822()
+                            .chars()
+                            .take(16)
+                            .collect::<String>();
+
 
                         view! {
                         <div class="blog">
