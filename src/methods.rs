@@ -142,7 +142,8 @@ pub struct CommentDto {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EntryApiDto {
-    pub image: String,
+    title: String,
+    image: String,
 }
 
 #[server(AddPost, "/api")]
@@ -150,12 +151,7 @@ pub async fn add_post(entry: EntryApiDto) -> Result<(), ServerFnError> {
     use base64::Engine;
     use base64::prelude::BASE64_STANDARD;
 
-    let mut img = entry.image;
-
-    img.remove(0);
-    img.pop();
-
-    let img: Vec<u8> = img.split(',').map(|n| n.parse::<u8>().unwrap()).collect();
+    let img: Vec<u8> = entry.image[1..entry.image.len() - 1].split(',').map(|n| n.parse::<u8>().unwrap()).collect();
 
     println!("{:?}", BASE64_STANDARD.encode(&img));
 

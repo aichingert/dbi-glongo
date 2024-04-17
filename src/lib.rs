@@ -2,6 +2,7 @@
 
 pub mod app;
 pub mod methods;
+pub mod components;
 
 use cfg_if::cfg_if;
 
