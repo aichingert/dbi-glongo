@@ -13,8 +13,8 @@ pub fn FileUpload(ssf: WriteSignal<Option<String>>) -> impl IntoView {
 
             spawn_local(async move {
                 let bytes = wasm_bindgen_futures::JsFuture::from(file_blob_promise).await.unwrap();
-                let byte_arr = js_sys::Uint8Array::new(&bytes);
-                let s = serde_json::to_string(&byte_arr.to_vec()).unwrap();
+                let byte_arr: Vec<u8> = js_sys::Uint8Array::new(&bytes).to_vec();
+                let s = serde_json::to_string(&byte_arr).unwrap();
                 ssf.set(Some(s));
             });
         }

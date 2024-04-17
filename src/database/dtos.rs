@@ -41,5 +41,10 @@ pub struct CommentDto {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EntryApiDto {
     pub title: String,
-    pub image: String,
+    pub description: String,
+    pub text: String,
+
+    pub comments_allowed: Option<String>,
+    pub author: String,
+    pub image: Option<String>,
 }

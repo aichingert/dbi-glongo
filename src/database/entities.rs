@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::database::dtos::{EntryDto, AuthorDto, CommentDto};
+use crate::database::dtos::{EntryDto, EntryApiDto, AuthorDto, CommentDto};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -12,7 +12,7 @@ pub struct Entry {
     edit_dates: Vec<bson::DateTime>,
     impression_count: u64,
 
-    content: Content,
+    pub content: Content,
 
     comments_allowed: bool,
     categories: Vec<String>,
@@ -20,6 +20,25 @@ pub struct Entry {
 }
 
 impl Entry {
+    pub fn _new(entry: EntryApiDto) -> Self {
+        Self {
+            title: entry.title,
+            author: bson::oid::ObjectId::parse_str(&entry.author).unwrap(),
+            description: entry.description,
+            creation_date: bson::DateTime::now(),
+            edit_dates: vec![],
+            impression_count: 0,
+            content: Content {
+                text: entry.text,
+                links: vec![],
+                images: vec![],
+                coordinates: vec![],
+            },
+            comments_allowed: entry.comments_allowed.is_some(),
+            categories: vec![],
+            comments: vec![],
+        }
+    }
     pub fn _to_dto(self, authors: &Vec<AuthorDto>) -> EntryDto {
         let author = authors
             .iter()

@@ -3,9 +3,34 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub use crate::database::{
-    entities::Entry, 
+    entities::{Entry, Content},
     dtos::{EntryDto, AuthorDto, EntryApiDto}
 };
+
+use cfg_if::cfg_if;
+cfg_if! {
+if #[cfg(feature = "ssr")] {
+    use mongodb::{Cursor, bson::{doc, Document}, options::FindOptions};
+    use futures_util::StreamExt;
+
+    use base64::Engine;
+    use base64::prelude::BASE64_STANDARD;
+
+    pub async fn get_cursor<T>(
+        collection: &str, 
+        doc: Option<Document>, 
+        options: Option<FindOptions>,
+    ) -> Result<Cursor<T>, ServerFnError> {
+        Ok(mongodb::Client::with_uri_str("mongodb://root:root@localhost/db?authSource=admin")
+            .await?
+            .database("blogDB")
+            .collection::<T>(collection)
+            .find(doc, options)
+            .await?
+        )
+    }
+}
+}
 
 #[derive(Error, Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PostError {
@@ -19,120 +44,59 @@ pub enum PostError {
 
 #[server(AddPost, "/api")]
 pub async fn add_post(entry: EntryApiDto) -> Result<(), ServerFnError> {
-    use base64::Engine;
-    use base64::prelude::BASE64_STANDARD;
+    let image = entry.image.clone();
+    let mut entry = Entry::_new(entry);
 
-    let img: Vec<u8> = entry.image[1..entry.image.len() - 1].split(',').map(|n| n.parse::<u8>().unwrap()).collect();
+    if let Some(raw) = image {
+        let img: Vec<u8> = raw[1..raw.len() - 1].split(',').map(|n| n.parse::<u8>().unwrap()).collect();
+        entry.content.images.push(BASE64_STANDARD.encode(&img));
+    }
 
-    println!("{:?}", BASE64_STANDARD.encode(&img));
+    mongodb::Client::with_uri_str("mongodb://root:root@localhost/db?authSource=admin")
+        .await?
+        .database("blogDB")
+        .collection("entries")
+        .insert_one(entry, None)
+        .await?;
 
     Ok(())
 }
 
-/*
-pub async fn get_cursor<T>(
-    collection: &str, 
-    doc: Option<Document>, 
-    options: Option<FilterOptions>,
-) -> Resutl<Cursor<T>, ServerFnError> {
-    let client =
-        mongodb::Client::with_uri_str("mongodb://root:root@localhost/db?authSource=admin").await?;
-    let database = client.database("blogDB");
-
-    database
-        .collection::<T>(collection)
-        .find(doc, options)
-        .await?
-}
-*/
-
 #[server]
 pub async fn get_all_entries() -> Result<Vec<EntryDto>, ServerFnError> {
-    use futures_util::StreamExt;
-    use mongodb::{bson::doc, options::FindOptions};
-
-    let client = mongodb::Client::with_uri_str("mongodb://root:root@localhost/db?authSource=admin").await?;
-    let database = client.database("blogDB");
-
-    let cursor = database
-        .collection::<AuthorDto>("users")
-        .find(None, None)
-        .await?;
-    let authors = cursor
+    let authors = get_cursor::<AuthorDto>("users", None, None)
+        .await?
         .collect::<Vec<Result<AuthorDto, _>>>()
         .await
         .into_iter()
         .flatten()
         .collect::<Vec<AuthorDto>>();
 
-    println!("Hello");
-
-    let cursor = database
-        .collection::<Entry>("entries")
-        .find(
-            None,
-            FindOptions::builder()
-                .sort(doc! { "creationDate": -1 })
-                .build(),
-        )
-        .await?;
-
-    println!("Bello");
-
-    let res = cursor
+    Ok(get_cursor::<Entry>("entries", None, 
+        Some(FindOptions::builder().sort(doc! { "creationDate": -1 }).build()))
+        .await?
         .collect::<Vec<Result<Entry, _>>>()
-        .await;
-
-    let mut dtos = Vec::new();
-
-    for ent in res.into_iter() {
-        println!("{:?}", ent.is_ok());
-        if let Ok(entity) = ent {
-            let dto = entity._to_dto(&authors);
-            dtos.push(dto);
-        }
-    }
-    /*
+        .await
         .into_iter()
         .flatten()
         .map(|entry| Entry::_to_dto(entry, &authors))
-        .collect::<Vec<EntryDto>>();
-    */
-
-    println!("Cello");
-
-    Ok(dtos)
+        .collect::<Vec<EntryDto>>())
 }
 
 #[server]
 pub async fn get_entry(article: String) -> Result<Option<EntryDto>, ServerFnError> {
-    use futures_util::StreamExt;
-    use mongodb::bson::doc;
-
-    let client =
-        mongodb::Client::with_uri_str("mongodb://root:root@localhost/db?authSource=admin").await?;
-    let database = client.database("blogDB");
-
-    let cursor = database
-        .collection::<AuthorDto>("users")
-        .find(None, None)
-        .await?;
-    let authors = cursor
+    let aths = get_cursor::<AuthorDto>("users", None, None)
+        .await?
         .collect::<Vec<Result<AuthorDto, _>>>()
         .await
         .into_iter()
         .flatten()
         .collect::<Vec<AuthorDto>>();
 
-    let filter = article.split('-').collect::<Vec<_>>().join(" ");
+    let flt = article.split('-').collect::<Vec<_>>().join(" ");
 
-    let mut cursor = database
-        .collection::<Entry>("entries")
-        .find(doc! { "title": filter }, None)
-        .await?;
-
-    if let Some(entry) = cursor.next().await {
-        Ok(Some(Entry::_to_dto(entry?, &authors)))
+    if let Some(e) = get_cursor::<Entry>("entries", Some(doc! { "title": flt }), None).await?.next().await {
+        Ok(Some(Entry::_to_dto(e?, &aths)))
     } else {
         Ok(None)
     }

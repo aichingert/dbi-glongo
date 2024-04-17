@@ -75,3 +75,9 @@ a {
 	color: grey;
     background: rgba(43, 41, 45, 0.8);
 }
+
+.input-item{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
