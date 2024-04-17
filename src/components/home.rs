@@ -28,6 +28,8 @@ pub fn HomePage() -> impl IntoView {
                             .take(16)
                             .collect::<String>();
 
+                        let _article = entry.title.split(' ').collect::<Vec<_>>().join("-");
+
 
                         view! {
                         <div class="blog">
@@ -41,7 +43,7 @@ pub fn HomePage() -> impl IntoView {
                             </div>
                             <p style="color: #514e4d"> { &entry.description } </p>
                             <p style="color: #74c1c7"> written by { &entry.author.username } </p>
-                            <a href="/post/"{ &entry.title.split(' ').collect::<Vec<_>>().join("-") } > Read more </a>
+                            <a href="/post/{_article}" > Read more </a>
                         </div>
                     }
                     })

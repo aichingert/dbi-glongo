@@ -23,7 +23,7 @@ impl Entry {
     pub fn _to_dto(self, authors: &Vec<AuthorDto>) -> EntryDto {
         let author = authors
             .iter()
-            .find(|&author| author.id == self.author)
+            .find(|&author| author.id.unwrap() == self.author)
             .unwrap()
             .clone();
 
@@ -34,7 +34,7 @@ impl Entry {
                 text: comment.text.clone(),
                 author: authors
                     .iter()
-                    .find(|&author| author.id == comment.author)
+                    .find(|&author| author.id.unwrap() == comment.author)
                     .unwrap()
                     .clone(),
                 creation_date: comment.creation_date,

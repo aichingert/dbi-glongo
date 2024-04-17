@@ -29,6 +29,7 @@ pub async fn add_post(entry: EntryApiDto) -> Result<(), ServerFnError> {
     Ok(())
 }
 
+/*
 pub async fn get_cursor<T>(
     collection: &str, 
     doc: Option<Document>, 
@@ -43,12 +44,14 @@ pub async fn get_cursor<T>(
         .find(doc, options)
         .await?
 }
+*/
 
 #[server]
 pub async fn get_all_entries() -> Result<Vec<EntryDto>, ServerFnError> {
     use futures_util::StreamExt;
     use mongodb::{bson::doc, options::FindOptions};
 
+    let client = mongodb::Client::with_uri_str("mongodb://root:root@localhost/db?authSource=admin").await?;
     let database = client.database("blogDB");
 
     let cursor = database
@@ -62,6 +65,8 @@ pub async fn get_all_entries() -> Result<Vec<EntryDto>, ServerFnError> {
         .flatten()
         .collect::<Vec<AuthorDto>>();
 
+    println!("Hello");
+
     let cursor = database
         .collection::<Entry>("entries")
         .find(
@@ -72,13 +77,31 @@ pub async fn get_all_entries() -> Result<Vec<EntryDto>, ServerFnError> {
         )
         .await?;
 
-    Ok(cursor
+    println!("Bello");
+
+    let res = cursor
         .collect::<Vec<Result<Entry, _>>>()
-        .await
+        .await;
+
+    let mut dtos = Vec::new();
+
+    for ent in res.into_iter() {
+        println!("{:?}", ent.is_ok());
+        if let Ok(entity) = ent {
+            let dto = entity._to_dto(&authors);
+            dtos.push(dto);
+        }
+    }
+    /*
         .into_iter()
         .flatten()
         .map(|entry| Entry::_to_dto(entry, &authors))
-        .collect::<Vec<EntryDto>>())
+        .collect::<Vec<EntryDto>>();
+    */
+
+    println!("Cello");
+
+    Ok(dtos)
 }
 
 #[server]

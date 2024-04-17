@@ -16,9 +16,9 @@ pub fn App() -> impl IntoView {
         <Router fallback>
             <main>
                 <Routes>
-                    <Route path="" view=HomePage/>
-                    <Route path="post/:article" view=Post/>
-                    <Route path="write-blog" view=WriteBlog/>
+                    <Route path="" view=HomePage ssr=SsrMode::Async />
+                    <Route path="post/:article" view=Post ssr=SsrMode::Async />
+                    <Route path="write-blog" view=WriteBlog ssr=SsrMode::Async />
                 </Routes>
             </main>
         </Router>

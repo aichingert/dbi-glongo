@@ -25,7 +25,7 @@ pub struct EntryDto {
 #[serde(rename_all = "camelCase")]
 pub struct AuthorDto {
     #[serde(rename(deserialize = "_id"))]
-    pub id: bson::oid::ObjectId,
+    pub id: Option<bson::oid::ObjectId>,
     pub username: String,
     pub email: String,
 }
