@@ -17,7 +17,7 @@ pub fn HomePage() -> impl IntoView {
                             s.as_str(), "NASA" | "vulnerability" | "Programming" | "news" | "bypass"
                         ))
                             .map(|category| view! {
-                            <a class="{category}" href="" exact=true> {category}</a>
+                            <a class={category} href="" exact=true> {category}</a>
                         })
                             .collect_view();
 
@@ -53,22 +53,22 @@ pub fn HomePage() -> impl IntoView {
     view! {
         <Suspense fallback=move || view! { <p style="display: flex; justify-content: center">"Loading posts..."</p> }>
             <div style="display: grid;">
-                <div style="width: 100%; grid-column-start: 1; grid-column-end: 2; align-items: center">
+                <div style="width: 100%; grid-column-start: 1; grid-column-end: 2; column-width: 400px; align-items: center">
                     <div style="display: flex; flex-direction: column; align-items: center">
-                        <div>
-                            <h1>Blogs</h1>
-                        </div>
-
                         <div style="margin: 10px">
+                            <h1>Blogs</h1>
+
                             <a style="margin: 10px" href="/">Read</a>
                             <a style="margin: 10px" href="/write-blog">Write</a>
                         </div>
                     </div>
                 </div>
                 <div style="grid-column-start: 2; grid-column-end: 3">
-                    <p>Recent posts</p>
-                    <div style="border-bottom: 1px solid #3f3f46" />
-                    <ul>{entry_view}</ul>
+                    <div>
+                        <p style="margin-left: 50px">Recent posts</p>
+                        <div style="margin-left: 50px; border-bottom: 1px solid #3f3f46" />
+                        <ul>{entry_view}</ul>
+                    </div>
                 </div>
             </div>
 

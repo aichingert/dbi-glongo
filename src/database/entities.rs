@@ -35,15 +35,14 @@ impl Entry {
                 coordinates: vec![],
             },
             comments_allowed: entry.comments_allowed.is_some(),
-            categories: vec![],
+            categories: vec![entry.category],
             comments: vec![],
         }
     }
-    pub fn _to_dto(self, authors: &Vec<AuthorDto>) -> EntryDto {
+    pub fn _to_dto(self, authors: &Vec<AuthorDto>) -> Option<EntryDto> {
         let author = authors
             .iter()
-            .find(|&author| author.id.unwrap() == self.author)
-            .unwrap()
+            .find(|&author| author.id.unwrap() == self.author)?
             .clone();
 
         let mut comments = Vec::new();
@@ -53,14 +52,13 @@ impl Entry {
                 text: comment.text.clone(),
                 author: authors
                     .iter()
-                    .find(|&author| author.id.unwrap() == comment.author)
-                    .unwrap()
+                    .find(|&author| author.id.unwrap() == comment.author)?
                     .clone(),
                 creation_date: comment.creation_date,
             });
         }
 
-        EntryDto {
+        Some(EntryDto {
             title: self.title,
             author,
             description: self.description,
@@ -75,7 +73,7 @@ impl Entry {
             comments_allowed: self.comments_allowed,
             categories: self.categories,
             comments,
-        }
+        })
     }
 }
 
@@ -91,8 +89,8 @@ pub struct Content {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Coordinate {
-    long: f64,
-    lat: f64,
+    pub long: f64,
+    pub lat: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

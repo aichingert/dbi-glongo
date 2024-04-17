@@ -41,6 +41,11 @@ pub fn Post() -> impl IntoView {
                 .map(|link| view! { <a href={link}>{link}</a><br/>})
                 .collect_view();
 
+            let coordinate_view = entry.content.coordinates
+                .iter()
+                .map(|link| view! { <p>Coordinate: long = {link.long} lat {link.lat} </p> })
+                .collect_view();
+
             let article = entry.title.split(' ').collect::<Vec<_>>().join("-");
             let date = entry.creation_date
                 .to_chrono()
@@ -55,7 +60,7 @@ pub fn Post() -> impl IntoView {
                 <p class="small-text">{ &date }</p>
 
                 <h1>{&entry.title}</h1>
-                <h2 style="font-style: italic;">{&entry.description}</h2>
+                <h2 style="font-style: italic;">{&entry.description} - { entry.impression_count } </h2>
 
                 <pre style="text-wrap: wrap"> {&entry.content.text} </pre>
 
@@ -65,6 +70,7 @@ pub fn Post() -> impl IntoView {
                 </div>
 
                 <ul> { link_view } </ul>
+                <ul> { coordinate_view } </ul>
 
                 <CommentView _article=article comments_allowed=entry.comments_allowed comments=entry.comments.clone() />
 

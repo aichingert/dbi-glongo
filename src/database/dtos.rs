@@ -43,6 +43,7 @@ pub struct EntryApiDto {
     pub title: String,
     pub description: String,
     pub text: String,
+    pub category: String,
 
     pub comments_allowed: Option<String>,
     pub author: String,

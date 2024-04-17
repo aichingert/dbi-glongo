@@ -25,3 +25,14 @@ pub fn FileUpload(ssf: WriteSignal<Option<String>>) -> impl IntoView {
     }
 }
 
+#[component]
+pub fn SelectOption(is: &'static str, value: ReadSignal<String>) -> impl IntoView {
+    view! {
+        <option
+            value=is
+            selected=move || value.get() == is
+        >
+            {is}
+        </option>
+    }
+}

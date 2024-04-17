@@ -79,13 +79,13 @@ pub async fn get_all_entries() -> Result<Vec<EntryDto>, ServerFnError> {
         .await
         .into_iter()
         .flatten()
-        .map(|entry| Entry::_to_dto(entry, &authors))
+        .filter_map(|entry| Entry::_to_dto(entry, &authors))
         .collect::<Vec<EntryDto>>())
 }
 
 #[server]
 pub async fn get_entry(article: String) -> Result<Option<EntryDto>, ServerFnError> {
-    let aths = get_cursor::<AuthorDto>("users", None, None)
+    let  authors= get_cursor::<AuthorDto>("users", None, None)
         .await?
         .collect::<Vec<Result<AuthorDto, _>>>()
         .await
@@ -93,10 +93,17 @@ pub async fn get_entry(article: String) -> Result<Option<EntryDto>, ServerFnErro
         .flatten()
         .collect::<Vec<AuthorDto>>();
 
-    let flt = article.split('-').collect::<Vec<_>>().join(" ");
+    let filter = article.split('-').collect::<Vec<_>>().join(" ");
 
-    if let Some(e) = get_cursor::<Entry>("entries", Some(doc! { "title": flt }), None).await?.next().await {
-        Ok(Some(Entry::_to_dto(e?, &aths)))
+    if let Some(res) = mongodb::Client::with_uri_str("mongodb://root:root@localhost/db?authSource=admin")
+        .await?
+        .database("blogDB")
+        .collection::<Entry>("entries")
+        .find_one_and_update(doc! { "title": &filter }, doc!{ "$inc": { "impressionCount": 1 } }, None)
+        .await?
+    {
+        println!("{res:?}");
+        Ok(res._to_dto(&authors))
     } else {
         Ok(None)
     }
