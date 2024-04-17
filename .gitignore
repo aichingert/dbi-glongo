@@ -3,6 +3,7 @@
 /build
 erl_crash.dump
 data
+.idea
 
 
 

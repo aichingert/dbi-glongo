@@ -1,7 +1,11 @@
-use crate::methods::{get_all_entries, get_entry, CommentDto, PostError};
+use crate::methods::{get_all_entries, get_entry, CommentDto, PostError, AddPost};
 use leptos::*;
+use leptos::html::Input;
 use leptos_meta::*;
 use leptos_router::*;
+use log::Level;
+use wasm_bindgen::JsCast;
+use web_sys::{HtmlInputElement, js_sys};
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -26,7 +30,32 @@ pub fn App() -> impl IntoView {
 
 #[component]
 fn WriteBlog() -> impl IntoView {
-    view! {}
+    let (sf, ssf) = create_signal(None::<String>);
+    let file_input = create_node_ref::<Input>();
+    let on_file_change = move |_| {
+        if let Some(files) = file_input.get().and_then(|f| f.dyn_ref::<HtmlInputElement>().unwrap().files()) {
+            let file = files.get(0).unwrap();
+            let file_blob_promise = js_sys::Promise::resolve(&file.array_buffer());
+
+            spawn_local(async move {
+                let bytes = wasm_bindgen_futures::JsFuture::from(file_blob_promise).await.unwrap();
+                let byte_arr = js_sys::Uint8Array::new(&bytes);
+                let s = serde_json::to_string(&byte_arr.to_vec()).unwrap();
+                _ = console_log::init_with_level(Level::Debug);
+                ssf.set(Some(s));
+            });
+        }
+    };
+
+    let add_post = Action::<AddPost, _>::server();
+
+    view! {
+        <input ref=file_input type="file" on:change=on_file_change/>
+        <ActionForm action=add_post>
+            <input type="hidden" name="entry[image]" value=move || sf.get().unwrap_or_default() />
+            <input type="submit" />
+        </ActionForm>
+    }
 }
 
 #[component]
@@ -44,22 +73,15 @@ fn HomePage() -> impl IntoView {
                             s.as_str(), "NASA" | "vulnerability" | "Programming" | "news" | "bypass"
                         ))
                         .map(|category| view! {
-                            <a class="{category}" href="/category/{category}"> {category}</a>
+                            <a class="{category}" href="" exact=true> {category}</a>
                         })
                         .collect_view();
 
-                    let last_edited = entry.creation_date
-                        .to_chrono()
-                        .to_rfc2822()
-                        .chars()
-                        .take(16)
-                        .collect::<String>();
-
-                    let article = entry.title.split(' ').collect::<Vec<_>>().join("-");
+                    let last_edited = entry.get_date_string();
 
                     view! {
                         <div class="blog">
-                            <div class="small-text" style="display: flex; align-items: center;">
+                            <div class="small-text" style="font-size: 20px; display: flex; align-items: center;">
                                 <p> { last_edited } </p>
                             </div>
 
@@ -67,9 +89,9 @@ fn HomePage() -> impl IntoView {
                                 <p> { &entry.title } </p>
                                 { category_view }
                             </div>
-                            <p style="color: #3f3f46"> { &entry.description } </p>
-                            <p style="color: #3f3f46"> written by { &entry.author.username } </p>
-                            <a href="/post/{article}"> Read more </a>
+                            <p style="color: #514e4d"> { &entry.description } </p>
+                            <p style="color: #74c1c7"> written by { &entry.author.username } </p>
+                            <a href="/post/"{ &entry.title.split(' ').collect::<Vec<_>>().join("-") } > Read more </a>
                         </div>
                     }
                 })
@@ -88,7 +110,7 @@ fn HomePage() -> impl IntoView {
 
                         <div style="margin: 10px">
                             <a style="margin: 10px" href="/">Read</a>
-                            <a style="margin: 10px" href="/">Write</a>
+                            <a style="margin: 10px" href="/write-blog">Write</a>
                         </div>
                     </div>
                 </div>
@@ -139,7 +161,9 @@ fn Post() -> impl IntoView {
             let image_view = entry.content.images
                 .iter()
                 .map(|image| view! {
-                    <img src={ format!("data:image/png;base64, {}", image) } />
+                    <div style="display:flex; justify-content: center">
+                        <img src={ format!("data:image/png;base64, {}", image) } />
+                    </div>
                 })
                 .collect_view();
             let link_view = entry.content.links
@@ -147,16 +171,26 @@ fn Post() -> impl IntoView {
                 .map(|link| view! { <a href={link}>{link}</a><br/>})
                 .collect_view();
 
+            let article = entry.title.split(' ').collect::<Vec<_>>().join("-");
+
             view! {
                 <ul> { image_view } </ul>
+
+                <p class="small-text">{ &entry.get_date_string() }</p>
+
                 <h1>{&entry.title}</h1>
-                <p style="font-style: italic">{&entry.description}</p>
+                <h2 style="font-style: italic;">{&entry.description}</h2>
 
                 <pre style="text-wrap: wrap"> {&entry.content.text} </pre>
 
+                <div style="display: flex">
+                    <pre>written by </pre>
+                    <p style="font-size: 25px; color: #74c1c7">{ &entry.author.username }</p>
+                </div>
+
                 <ul> { link_view } </ul>
 
-                <CommentView comments_allowed=entry.comments_allowed comments=entry.comments.clone() />
+                <CommentView _article=article comments_allowed=entry.comments_allowed comments=entry.comments.clone() />
 
                 <div style="border-bottom: solid white 1px; margin: 25px" />
             }
@@ -203,11 +237,12 @@ fn Post() -> impl IntoView {
 }
 
 #[component]
-fn CommentView(comments_allowed: bool, comments: Vec<CommentDto>) -> impl IntoView {
+fn CommentView(_article: String, comments_allowed: bool, comments: Vec<CommentDto>) -> impl IntoView {
+
     view! {
         {move || match comments_allowed {
             true => view! {
-                <form action="" method="post" style="margin: 25px">
+                <form action="/api/comments/{_article}" method="post" style="margin: 25px">
                     <div>
                         <textarea style="font-size:1.2em;"></textarea>
                     </div>
@@ -223,7 +258,10 @@ fn CommentView(comments_allowed: bool, comments: Vec<CommentDto>) -> impl IntoVi
             key=|comment| comment.creation_date.clone()
             children=move |comment: CommentDto| {
               view! {
-                  <p>{ comment.text }</p>
+                  <div style="display:flex">
+                        <pre style="color: #74c1c7"> { &comment.author.username } </pre>
+                        <pre style="text-wrap: wrap"> commented: { comment.text } </pre>
+                  </div>
               }
             }
         />

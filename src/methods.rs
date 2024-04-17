@@ -74,7 +74,16 @@ pub struct EntryDto {
 }
 
 impl EntryDto {
-    fn from_entry_with_authors(entry: Entry, authors: &Vec<AuthorDto>) -> Self {
+    pub fn get_date_string(&self) -> String {
+        self.creation_date
+            .to_chrono()
+            .to_rfc2822()
+            .chars()
+            .take(16)
+            .collect::<String>()
+    }
+
+    fn _from_entry_with_authors(entry: Entry, authors: &Vec<AuthorDto>) -> Self {
         let author = authors
             .iter()
             .find(|&author| author.id == entry.author)
@@ -131,6 +140,28 @@ pub struct CommentDto {
     pub creation_date: bson::DateTime,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EntryApiDto {
+    pub image: String,
+}
+
+#[server(AddPost, "/api")]
+pub async fn add_post(entry: EntryApiDto) -> Result<(), ServerFnError> {
+    use base64::Engine;
+    use base64::prelude::BASE64_STANDARD;
+
+    let mut img = entry.image;
+
+    img.remove(0);
+    img.pop();
+
+    let img: Vec<u8> = img.split(',').map(|n| n.parse::<u8>().unwrap()).collect();
+
+    println!("{:?}", BASE64_STANDARD.encode(&img));
+
+    Ok(())
+}
+
 #[server]
 pub async fn get_all_entries() -> Result<Vec<EntryDto>, ServerFnError> {
     use futures_util::StreamExt;
@@ -166,7 +197,7 @@ pub async fn get_all_entries() -> Result<Vec<EntryDto>, ServerFnError> {
         .await
         .into_iter()
         .flatten()
-        .map(|entry| EntryDto::from_entry_with_authors(entry, &authors))
+        .map(|entry| EntryDto::_from_entry_with_authors(entry, &authors))
         .collect::<Vec<EntryDto>>())
 }
 
@@ -198,7 +229,7 @@ pub async fn get_entry(article: String) -> Result<Option<EntryDto>, ServerFnErro
         .await?;
 
     if let Some(entry) = cursor.next().await {
-        Ok(Some(EntryDto::from_entry_with_authors(entry?, &authors)))
+        Ok(Some(EntryDto::_from_entry_with_authors(entry?, &authors)))
     } else {
         Ok(None)
     }
