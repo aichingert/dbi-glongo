@@ -31,9 +31,7 @@ if #[cfg(feature = "ssr")] {
     }
 }
 }
-
-#[derive(Error, Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum PostError {
+#[derive(Error, Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)] pub enum PostError {
     #[error("Invalid post ID.")]
     InvalidArticle,
     #[error("Post not found.")]
@@ -43,11 +41,20 @@ pub enum PostError {
 }
 
 #[server(AddPost, "/api")]
-pub async fn add_post(entry: EntryApiDto) -> Result<(), ServerFnError> {
+pub async fn add_post(entry: EntryApiDto) -> Result<(), ServerFnError> { 
     let image = entry.image.clone();
-    let mut entry = Entry::_new(entry);
 
-    if let Some(raw) = image {
+    // doc!{ "$inc": { "impressionCount": 1 } }
+    let author = get_cursor::<AuthorDto>("users", Some(doc! { "firstname": "Guest" }), None)
+        .await?
+        .next()
+        .await;
+
+    //println!("{:?}", entry.author);
+    let mut entry = Entry::_new(entry);
+    entry.author = author.unwrap().unwrap().id.unwrap();
+
+if let Some(raw) = image {
         let img: Vec<u8> = raw[1..raw.len() - 1].split(',').map(|n| n.parse::<u8>().unwrap()).collect();
         entry.content.images.push(BASE64_STANDARD.encode(&img));
     }
@@ -102,7 +109,6 @@ pub async fn get_entry(article: String) -> Result<Option<EntryDto>, ServerFnErro
         .find_one_and_update(doc! { "title": &filter }, doc!{ "$inc": { "impressionCount": 1 } }, None)
         .await?
     {
-        println!("{res:?}");
         Ok(res._to_dto(&authors))
     } else {
         Ok(None)

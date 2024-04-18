@@ -70,7 +70,7 @@ pub fn WriteBlog() -> impl IntoView {
                         </div>
 
                         // author is hard coded, but should normaly be the one that is currently logged in
-                        <input type="hidden" name="entry[author]" value="661f9d5113f73d0319c00e84" />
+                        <input type="hidden" name="entry[author]" value="6620436a0c07f5db34c00e84" />
                         <input type="hidden" name="entry[category]" value=move || value.get() />
                         <div class="input-item">
                             <input type="submit" />

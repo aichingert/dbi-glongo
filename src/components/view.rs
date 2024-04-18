@@ -41,6 +41,10 @@ pub fn Post() -> impl IntoView {
                 .map(|link| view! { <a href={link}>{link}</a><br/>})
                 .collect_view();
 
+            let category_view = entry.categories.iter()
+                .map(|category| view! { <pre> {category} </pre> } )
+                .collect_view();
+
             let coordinate_view = entry.content.coordinates
                 .iter()
                 .map(|link| view! { <p>Coordinate: long = {link.long} lat {link.lat} </p> })
@@ -61,6 +65,8 @@ pub fn Post() -> impl IntoView {
 
                 <h1>{&entry.title}</h1>
                 <h2 style="font-style: italic;">{&entry.description} - { entry.impression_count } </h2>
+
+                <ul> { category_view } </ul>
 
                 <pre style="text-wrap: wrap"> {&entry.content.text} </pre>
 

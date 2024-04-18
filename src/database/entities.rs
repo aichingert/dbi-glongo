@@ -5,7 +5,7 @@ use crate::database::dtos::{EntryDto, EntryApiDto, AuthorDto, CommentDto};
 #[serde(rename_all = "camelCase")]
 pub struct Entry {
     title: String,
-    author: bson::oid::ObjectId,
+    pub author: bson::oid::ObjectId,
     description: String,
 
     creation_date: bson::DateTime,
